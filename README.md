@@ -1116,6 +1116,4 @@ jobs:
 
 ---
 
-## License
-
-MIT
+**Author:** Miles James ([mi1esahead](https://github.com/mi1esahead))
