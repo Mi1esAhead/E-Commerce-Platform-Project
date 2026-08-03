@@ -5,6 +5,7 @@ A production-ready 3-tier e-commerce web application built with React, Go (Fiber
 ```
 
 ## Architecture:
+
                          +------------------+
                          |   AWS ALB        |
                          | (Ingress Controller) |
