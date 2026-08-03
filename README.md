@@ -4,7 +4,7 @@ A production-ready 3-tier e-commerce web application built with React, Go (Fiber
 
 ```
 
-## Architecture:
+**Architecture**
 
                          +------------------+
                          |   AWS ALB        |
@@ -29,6 +29,7 @@ A production-ready 3-tier e-commerce web application built with React, Go (Fiber
            | 5Gi PVC (gp2)   |
            +------------------+
 ```
+
 
 ## Tech Stack
 
