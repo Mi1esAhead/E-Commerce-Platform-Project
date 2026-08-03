@@ -2,15 +2,6 @@
 
 A production-ready 3-tier e-commerce web application built with React, Go (Fiber), and MySQL, deployed on AWS EKS using Helm charts.
 
-
-
-<img width="1280" height="720" alt="Shopverse project - Thumbnail" src="https://github.com/user-attachments/assets/fd0a3efe-aeb3-48dc-8912-714517580010" />
-
-
-## YouTube Video Link:
-
-```
-https://youtu.be/XQrJrf6pUvk?si=XGsLPOm6YC1AEJFk
 ```
 
 ## Architecture:
