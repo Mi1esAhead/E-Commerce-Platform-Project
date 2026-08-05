@@ -46,4 +46,35 @@ jobs:
       - name: Run frontend lint
         working-directory: ./frontend
         run: npx eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 --config .eslintrc.cjs
+  # ──────────────────────────────────────────────
+  # Stage 2: Security Scan
+  # ──────────────────────────────────────────────
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: docker build -t shopverse-frontend:scan ./frontend
+
+      - name: Build backend image
+        run: docker build -t shopverse-backend:scan ./backend
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y wget apt-transport-https gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -q
+          sudo apt-get install -y trivy
+
+      - name: Run Trivy scan on frontend
+        run: |
+          trivy image --exit-code 1 --severity CRITICAL --ignore-unfixed --format table shopverse-frontend:scan
+
+      - name: Run Trivy scan on backend
+        run: |
+          trivy image --exit-code 1 --severity CRITICAL --ignore-unfixed --format table shopverse-backend:scan
   
