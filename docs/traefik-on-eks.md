@@ -84,9 +84,6 @@ ports:
     port: 8443
     exposedPort: 443
 
-logs:
-  general:
-    level: INFO
 ```
 
 ### Install Traefik
