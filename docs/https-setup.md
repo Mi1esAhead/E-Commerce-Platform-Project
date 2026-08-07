@@ -46,7 +46,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: vijaygiduthuri@gmail.com
+    email: <YOUR_EMAIL_HERE>
     privateKeySecretRef:
       name: letsencrypt-prod-key
     solvers:
