@@ -79,7 +79,7 @@ spec:
     name: letsencrypt-prod
     kind: ClusterIssuer
   dnsNames:
-    - vijaygiduthuri.in
+    - <NAME_OF_YOUR_DOMAIN>
 EOF
 ```
 
