@@ -111,17 +111,17 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(\`vijaygiduthuri.in\`) && PathPrefix(\`/api\`)
+    - match: Host(\`<YOUR_DOMAIN_HERE>\`) && PathPrefix(\`/api\`)
       kind: Rule
       services:
         - name: shopverse-backend-svc
           port: 8080
-    - match: Host(\`vijaygiduthuri.in\`) && PathPrefix(\`/health\`)
+    - match: Host(\`<YOUR_DOMAIN_HERE>\`) && PathPrefix(\`/health\`)
       kind: Rule
       services:
         - name: shopverse-backend-svc
           port: 8080
-    - match: Host(\`vijaygiduthuri.in\`)
+    - match: Host(\`YOUR_DOMAIN_HERE\`)
       kind: Rule
       services:
         - name: shopverse-frontend-svc
@@ -156,7 +156,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(\`vijaygiduthuri.in\`)
+    - match: Host(\`<YOUR_DOMAIN_HERE>\`)
       kind: Rule
       middlewares:
         - name: redirect-https
@@ -172,14 +172,14 @@ Test HTTPS is working:
 
 ```bash
 # Check certificate in browser
-https://vijaygiduthuri.in
+https://<YOUR_DOMAIN_HERE>
 
 # Check from command line
-curl -I https://vijaygiduthuri.in
+curl -I https://<YOUR_DOMAIN_HERE>
 
 # Verify HTTP redirects to HTTPS
-curl -I http://vijaygiduthuri.in
-# Should return 301 with Location: https://vijaygiduthuri.in
+curl -I http://<YOUR_DOMAIN_HERE>
+# Should return 301 with Location: https://<YOUR_DOMAIN_HERE>
 ```
 
 ## Certificate Renewal
