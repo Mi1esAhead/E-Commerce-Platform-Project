@@ -1,0 +1,20 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: shopverse-web-redirect
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  entryPoints:
+    - web
+
+  routes:
+    - match: Host(`{{ .Values.frontend.ingressHost }}`)
+      kind: Rule
+
+      middlewares:
+        - name: redirect-https
+
+      services:
+        - name: noop@internal
+          kind: TraefikService
