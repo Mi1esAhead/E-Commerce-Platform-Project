@@ -8,7 +8,7 @@ frontend:
   serviceName: shopverse-frontend-svc
   servicePort: 80
   ingressName: shopverse-frontend-ingress
-  ingressHost: ""
+  ingressHost: "shop.m1portfolio.com"
 
 # ──────────────────────────────────────
 # Backend
@@ -20,7 +20,7 @@ backend:
   serviceName: shopverse-backend-svc
   servicePort: 8080
   ingressName: shopverse-backend-ingress
-  ingressHost: ""
+  ingressHost: "shop.m1portfolio.com"
 
 # ──────────────────────────────────────
 # MySQL
