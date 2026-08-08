@@ -2,23 +2,31 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Values.frontend.ingressName }}
+  name: {{ .Values.backend.ingressName }}
   labels:
     app: shopverse
   annotations:
     {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
   rules:
-    - host: {{ .Values.frontend.ingressHost | default "" | quote }}
+    - host: {{ .Values.backend.ingressHost | default "" | quote }}
       http:
         paths:
-          - path: /
+          - path: /api
             pathType: Prefix
             backend:
               service:
-                name: {{ .Values.frontend.serviceName }}
+                name: {{ .Values.backend.serviceName }}
                 port:
-                  number: {{ .Values.frontend.servicePort }}
+                  number: {{ .Values.backend.servicePort }}
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: {{ .Values.backend.serviceName }}
+                port:
+                  number: {{ .Values.backend.servicePort }}
+{{- end }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
