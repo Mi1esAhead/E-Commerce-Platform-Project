@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: shopverse-websecure
+  namespace: {{ .Release.Namespace }}
+
+spec:
+  entryPoints:
+    - websecure
+
+  routes:
+    - match: Host(`{{ .Values.frontend.ingressHost }}`)
+      kind: Rule
+
+      services:
+        - name: {{ .Values.frontend.serviceName }}
+          port: {{ .Values.frontend.servicePort }}
