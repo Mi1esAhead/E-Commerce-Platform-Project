@@ -6,28 +6,72 @@ A production-ready 3-tier e-commerce web application built with React, Go (Fiber
 
 **Architecture**
 
-                         +------------------+
-                         |   AWS ALB        |
-                         | (Ingress Controller) |
-                         +--------+---------+
-                                  |
-                    +-------------+-------------+
-                    |                           |
-              /api/* routes               /* routes
-                    |                           |
-           +--------v---------+     +-----------v----------+
-           | Backend Service  |     | Frontend Service     |
-           | (Go + Fiber)     |     | (React + Nginx)      |
-           | Port 8080        |     | Port 80              |
-           | NodePort: 30081  |     | NodePort: 30080      |
-           | 2 replicas       |     | 2 replicas           |
-           +--------+---------+     +----------------------+
-                    |
-           +--------v---------+
-           | MySQL StatefulSet|
-           | Port 3306        |
-           | 5Gi PVC (gp2)   |
-           +------------------+
+                           ┌───────────────────┐
+                           │      Internet     │
+                           └─────────┬─────────┘
+                                     │
+                                     │ HTTPS
+                                     ▼
+                         ┌─────────────────────┐
+                         │      Route 53       │
+                         │ shop.m1portfolio.com│
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │ AWS Network Load    │
+                         │ Balancer (NLB)      │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────┐
+                    │         Traefik           │
+                    │   Ingress Controller      │
+                    │      Amazon EKS           │
+                    └────────────┬──────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    │                         │
+                  /*                       /api/*
+                    │                         │
+                    ▼                         ▼
+        ┌─────────────────────┐   ┌─────────────────────┐
+        │  Frontend Service   │   │   Backend Service   │
+        │                     │   │                     │
+        │ React + NGINX       │   │ Go + Fiber          │
+        │ Port 80             │   │ Port 8080           │
+        │ 2 Replicas          │   │ 2 Replicas          │
+        └─────────────────────┘   └──────────┬──────────┘
+                                             │
+                                             ▼
+                                  ┌─────────────────────┐
+                                  │ MySQL StatefulSet   │
+                                  │ Port 3306           │
+                                  │ 5 Gi Persistent     │
+                                  │ Volume              │
+                                  └─────────────────────┘
+
+
+        ┌─────────────────────────────────────────────────────┐
+        │                  DEPLOYMENT PIPELINE                │
+        │                                                     │
+        │ GitHub → GitHub Actions → Docker → ECR → Helm → EKS│
+        └─────────────────────────────────────────────────────┘
+
+
+        ┌─────────────────────────────────────────────────────┐
+        │                     SECURITY                        │
+        │                                                     │
+        │ ACM TLS Certificate → shop.m1portfolio.com → HTTPS  │
+        └─────────────────────────────────────────────────────┘
+
+
+        ┌─────────────────────────────────────────────────────┐
+        │                  COST MANAGEMENT                    │
+        │                                                     │
+        │ Bastion Host → Start/Stop Scripts → EKS Node Group │
+        │                         shopverse-cluster-nodes      │
+        └─────────────────────────────────────────────────────┘
 ```
 
 
@@ -1104,6 +1148,89 @@ jobs:
 
 
 ```
+
+## Extended Description
+
+After completing the initial deployment of ShopVerse on Amazon EKS, I continued expanding the infrastructure to make the application more secure, production-oriented, automated, and cost-conscious.
+
+### HTTPS, DNS, and Secure Application Access
+
+I configured a custom subdomain, **shop.m1portfolio.com**, using **Amazon Route 53** to provide a dedicated public endpoint for the application. I also used **AWS Certificate Manager (ACM)** to provision and validate an SSL/TLS certificate for the subdomain, allowing the application to support secure HTTPS communication.
+
+This improved the original architecture by moving from basic public application access toward a more production-style deployment using custom DNS and encrypted traffic.
+
+### Traefik Ingress Controller and Network Load Balancing
+
+I implemented **Traefik as the Kubernetes Ingress Controller** within the Amazon EKS cluster to manage incoming application traffic.
+
+Traefik was exposed through an **AWS Network Load Balancer (NLB)** and configured to route requests to the appropriate Kubernetes services based on the requested path:
+
+* `/*` → React/NGINX frontend
+* `/api/*` → Go/Fiber backend
+
+This created a centralized entry point for the application rather than exposing the frontend and backend services directly to the internet.
+
+The resulting request flow became:
+
+**User → Route 53 → AWS NLB → Traefik → Kubernetes Services → Application Pods**
+
+### Containerized Application Deployment
+
+Both the React frontend and Go backend were containerized using **Docker**. The resulting container images are stored in **Amazon Elastic Container Registry (ECR)**, allowing the EKS cluster to retrieve versioned application images during deployments.
+
+The frontend uses **NGINX** to serve the compiled React application, while the backend runs as a Go/Fiber API service.
+
+### Kubernetes and Helm
+
+The application is orchestrated using **Amazon EKS**, with separate Kubernetes workloads for the frontend, backend, and MySQL database.
+
+The frontend and backend run with multiple replicas to demonstrate container orchestration and application scalability, while MySQL runs as a **StatefulSet** with persistent storage to maintain database data independently of pod lifecycle events.
+
+I also used **Helm** to package and manage the Kubernetes application configuration, making deployments and infrastructure changes more repeatable and easier to maintain.
+
+### CI/CD with GitHub Actions
+
+I implemented a **GitHub Actions CI/CD pipeline** to automate the application deployment process.
+
+The pipeline connects the source code, Docker image builds, Amazon ECR, Helm, and Amazon EKS so application changes can move through a repeatable deployment workflow rather than requiring the entire application to be deployed manually.
+
+The deployment workflow follows the general pattern:
+
+**GitHub → GitHub Actions → Docker Build → Amazon ECR → Helm → Amazon EKS**
+
+Building this pipeline also gave me hands-on experience troubleshooting container builds, image references, Helm deployments, Kubernetes rollout failures, and application configuration issues.
+
+### NGINX and Kubernetes Service Troubleshooting
+
+During deployment, I encountered an issue where the frontend containers entered a `CrashLoopBackOff` state because NGINX could not resolve the backend Kubernetes service.
+
+I diagnosed the issue by examining pod states, container logs, Kubernetes services, deployment configurations, and the NGINX configuration. After correcting the upstream service configuration and deploying an updated container image through Helm, the frontend and backend pods successfully reached a running state.
+
+This provided practical experience troubleshooting communication between containerized services inside Kubernetes rather than simply deploying a preconfigured application.
+
+### Cost Optimization and Environment Lifecycle Management
+
+After successfully deploying the live environment, I identified another important aspect of operating cloud infrastructure: **cost management**.
+
+Because an EKS-based portfolio environment does not need to run 24/7, leaving compute and supporting infrastructure active when the demonstration environment was not being used would generate unnecessary AWS costs.
+
+To address this, I created reusable **start and stop scripts** that allow me to control the ShopVerse environment and scale the EKS managed node group, `shopverse-cluster-nodes`, down when the live demo is not required and restore the environment when needed.
+
+This allows me to preserve the infrastructure and configuration while reducing unnecessary compute costs.
+
+The operational workflow became:
+
+**Start Environment → Scale EKS Resources Up → Run ShopVerse Demo → Stop Environment → Scale Resources Down**
+
+The scripts are stored alongside the project source code so the operational procedures are documented, version-controlled, and repeatable.
+
+### What the Project Demonstrates
+
+ShopVerse evolved from an e-commerce application deployment into a broader **AWS DevOps and cloud infrastructure project** demonstrating hands-on experience with:
+
+**AWS • Amazon EKS • Kubernetes • Docker • Amazon ECR • Helm • GitHub Actions • Terraform • Traefik • NGINX • Route 53 • AWS Certificate Manager • Network Load Balancing • HTTPS/TLS • Persistent Storage • CI/CD • Infrastructure Troubleshooting • Cloud Cost Optimization**
+
+The final project demonstrates not only how to deploy a containerized application to Kubernetes, but also how to secure it, expose it through production-style networking, automate its deployment, troubleshoot failures, manage persistent workloads, and consider the operational cost of keeping cloud infrastructure running.
 
 ---
 
